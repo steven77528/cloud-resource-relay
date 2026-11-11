@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cloud-resource-relay"
+version = "1.0.0"
+description = "Scoped HTTP collection relay for Qiniu, Huifu, Asign and WeChat"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "PyYAML==6.0.2",
+  "qiniu==7.18.0",
+  "cryptography==50.0.1",
+  "requests-toolbelt==1.0.0",
+]
+
+[project.optional-dependencies]
+test = ["pytest==8.3.5", "ruff==0.11.13"]
+
+[tool.setuptools.packages.find]
+include = ["cloud_resource_relay*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"

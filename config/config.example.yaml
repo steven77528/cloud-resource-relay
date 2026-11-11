@@ -1,0 +1,192 @@
+# 独立中转服务模板。所有客户端、账号和操作默认关闭，账号凭据留空。
+# 凭据文件路径和资源范围为示例；部署前需填写账号并提供有效凭据文件。
+# 正式配置位于 config/config.yaml；升级时不要覆盖已填写的凭据。
+# 中转只鉴权和转发固定只读 HTTP 请求。指标解析、分页、计算和告警均在监控项目。
+version: 1
+
+api:
+  scheme: http
+  host: "0.0.0.0"
+  port: 8443
+  # 监控通过 http://中转IP:18443 连接；无需域名或证书。
+  max_workers: 8
+  request_timeout_seconds: 15
+
+clients:
+  - id: qiniu-monitor
+    enabled: false
+    token_file: /app/config/secrets/qiniu-example.token
+    requests_per_minute: 60
+    operations:
+      - qiniu-balance
+      - qiniu-billing-snapshot
+      - qiniu-packages-month
+      - qiniu-package-expiry
+      - qiniu-kodo-standard
+      - qiniu-cdn-usage
+      - qiniu-cdn-status
+  - id: huifu-monitor
+    enabled: false
+    token_file: /app/config/secrets/huifu-example.token
+    requests_per_minute: 60
+    operations: [huifu-balance, huifu-settlements]
+  - id: asign-openapi-monitor
+    enabled: false
+    token_file: /app/config/secrets/asign-openapi-example.token
+    requests_per_minute: 60
+    operations: [asign-company-verification]
+  - id: wechat-monitor
+    enabled: false
+    token_file: /app/config/secrets/wechat-example.token
+    requests_per_minute: 60
+    operations:
+      - wechat-api-quota
+      - wechat-charge-packages
+      - wechat-annual-review
+      - wechat-js-errors
+      - wechat-performance
+
+accounts:
+  - id: qiniu-primary
+    provider: qiniu
+    enabled: false
+    access_key_id: ""
+    access_key_secret_file: /app/config/secrets/qiniu-secret.txt
+    request_timeout_seconds: 20
+  - id: huifu-primary
+    provider: huifu
+    enabled: false
+    sys_id: ""
+    product_id: ""
+    huifu_id: ""
+    private_key_file: /app/config/secrets/huifu-private.pem
+    huifu_public_key_file: /app/config/secrets/huifu-public.pem
+  - id: asign-openapi-primary
+    provider: asign
+    enabled: false
+    # 爱签仅接入 OpenAPI，使用中转端私钥签名。
+    api_mode: openapi
+    app_id: ""
+    endpoint: https://oapi.asign.cn
+    private_key_file: /app/config/secrets/asign-openapi-private.pem
+    timeout_seconds: 20
+  - id: wechat-primary
+    provider: wechat
+    enabled: false
+    appid: ""
+    token_file: /app/config/secrets/wechat-token.json
+    token_type: access_token
+    third_party_authorized: false
+    permission_sets: []
+    request_timeout_seconds: 20
+
+operations:
+  # 一个中转 HTTP 请求只转发一次上游查询。分页由监控发起多次请求。
+  # minimum_interval_seconds 默认 0，避免分页被间隔限制阻断。
+  # timeout_seconds 默认 20，最大 120；scope 只用于授权，不配置计算/告警。
+  - id: qiniu-balance
+    enabled: false
+    account: qiniu-primary
+    monitor_account: qiniu-example
+    kind: balance
+    scope: {}
+  - id: qiniu-billing-snapshot
+    enabled: false
+    account: qiniu-primary
+    monitor_account: qiniu-example
+    kind: billing_snapshot
+    scope: {}
+  - id: qiniu-packages-month
+    enabled: false
+    account: qiniu-primary
+    monitor_account: qiniu-example
+    kind: resource_packages_month
+    scope: {}
+  - id: qiniu-package-expiry
+    enabled: false
+    account: qiniu-primary
+    monitor_account: qiniu-example
+    kind: resource_packages
+    # 官方列表返回该账号原始数据，所选包过滤由监控完成。
+    scope: {}
+  - id: qiniu-kodo-standard
+    enabled: false
+    account: qiniu-primary
+    monitor_account: qiniu-example
+    kind: kodo_usage
+    scope:
+      buckets: [CHANGE_ME_BUCKET]
+  - id: qiniu-cdn-usage
+    enabled: false
+    account: qiniu-primary
+    monitor_account: qiniu-example
+    kind: cdn_usage
+    scope:
+      domains: [cdn.example.invalid]
+  - id: qiniu-cdn-status
+    enabled: false
+    account: qiniu-primary
+    monitor_account: qiniu-example
+    kind: cdn_status
+    scope:
+      domains: [cdn.example.invalid]
+  - id: huifu-balance
+    enabled: false
+    account: huifu-primary
+    monitor_account: huifu-example
+    kind: balance
+    # 官方余额响应是商户原始查询数据，子账户筛选和金额计算由监控完成。
+    scope: {}
+  - id: huifu-settlements
+    enabled: false
+    account: huifu-primary
+    monitor_account: huifu-example
+    kind: settlements
+    # 必须按需更新允许查询的交易身份；这里不是告警清单或 SLA 配置。
+    scope:
+      orders:
+        - org_req_date: "20260101"
+          org_req_seq_id: CHANGE_ME_ORIGINAL_REQUEST_ID
+  - id: asign-company-verification
+    enabled: false
+    account: asign-openapi-primary
+    monitor_account: asign-openapi-example
+    kind: company_verification
+    scope:
+      company_selectors:
+        - account: CHANGE_ME_OPENAPI_COMPANY_ACCOUNT
+  - id: wechat-api-quota
+    enabled: false
+    account: wechat-primary
+    monitor_account: wechat-example
+    kind: api_quota
+    scope:
+      cgi_paths:
+        - /cgi-bin/message/subscribe/send
+        - /wxa/getwxacodeunlimit
+  - id: wechat-charge-packages
+    enabled: false
+    account: wechat-primary
+    monitor_account: wechat-example
+    kind: charge_packages
+    scope:
+      spu_ids: [CHANGE_ME_SPU_ID]
+  - id: wechat-annual-review
+    enabled: false
+    account: wechat-primary
+    monitor_account: wechat-example
+    kind: annual_review
+    # 仅支持已获第三方代调用授权及权限集 30 的应用，先核对双方公开身份声明。
+    scope: {}
+  - id: wechat-js-errors
+    enabled: false
+    account: wechat-primary
+    monitor_account: wechat-example
+    kind: js_errors
+    scope: {}
+  - id: wechat-performance
+    enabled: false
+    account: wechat-primary
+    monitor_account: wechat-example
+    kind: performance
+    scope: {}

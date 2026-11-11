@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.tmp/
+build/
+dist/
+.env
+.env.*
+config/config.yaml
+config/secrets/*
+!config/secrets/.gitkeep
+config/tls/*
+!config/tls/.gitkeep
+*.log

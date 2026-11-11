@@ -1,0 +1,36 @@
+{
+  "business_samples": 13,
+  "calculation_owner": "monitor",
+  "checks": [
+    "http_without_certificates",
+    "health_http_ip",
+    "four_original_monitor_adapters",
+    "vendor_request_signatures",
+    "raw_response_unchanged",
+    "huifu_signed_string_parsing",
+    "metric_normalization",
+    "monitor_account_binding",
+    "token_acl",
+    "unknown_operation",
+    "request_parameter_rejection",
+    "signature_failure_preservation",
+    "credential_output_absent"
+  ],
+  "negative_checks": 6,
+  "protocol_version": 2,
+  "providers": 4,
+  "qiniu_cash_proof": {
+    "monitor_value": 123.45678901,
+    "relay_raw_value": "12345678901"
+  },
+  "real_vendor_requests": 0,
+  "relay_role": "authenticated_raw_forwarding",
+  "status": "passed",
+  "transport": "local_http_ip",
+  "vendor_requests": {
+    "asign": 1,
+    "huifu": 3,
+    "qiniu": 2,
+    "wechat": 1
+  }
+}

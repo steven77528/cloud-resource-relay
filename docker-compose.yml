@@ -1,0 +1,34 @@
+services:
+  collection-relay:
+    build:
+      context: .
+    image: cloud-resource-relay:1.0.0
+    restart: unless-stopped
+    init: true
+    command: ["--config", "/app/config/config.yaml", "serve"]
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      - ./config/config.yaml:/app/config/config.yaml:ro
+      - ./config/secrets:/app/config/secrets:ro
+    ports:
+      - "${RELAY_BIND_IP:-0.0.0.0}:18443:8443"
+    healthcheck:
+      test: ["CMD", "python", "-m", "cloud_resource_relay", "--config", "/app/config/config.yaml", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    stop_grace_period: 30s
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
